@@ -1,122 +1,127 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useMemo } from 'react'
+import { BoardProvider, useBoardContext } from './context/BoardContext'
+import Board from './components/board/Board'
+import Header from './components/layout/Header'
+import Toolbar from './components/layout/Toolbar'
+import TaskModal from './components/task/TaskModal'
+import ConfirmDialog from './components/ui/ConfirmDialog'
+import './index.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+/* ─── Inner app (consumes context) ──────────────────────────────────────────── */
+function KanbanApp() {
+  const { state, actions } = useBoardContext()
 
+  /* ── UI state ────────────────────────────────────────────────────────────── */
+  const [search, setSearch] = useState('')
+  const [taskModal, setTaskModal] = useState({
+    open: false,
+    mode: 'add',
+    columnId: null,
+    task: null,
+  })
+  const [confirmDelete, setConfirmDelete] = useState({ open: false, taskId: null })
+
+  /* ── Search filtering ──────────────────────────────────────────────────────
+     We compute a filtered view of the state without mutating the source.
+     Columns still show; cards that don't match are hidden.               */
+  const filteredState = useMemo(() => {
+    if (!search.trim()) return state
+
+    const q = search.toLowerCase()
+    const matchingIds = new Set(
+      Object.values(state.tasks)
+        .filter(
+          (t) =>
+            t.title.toLowerCase().includes(q) ||
+            (t.description && t.description.toLowerCase().includes(q)) ||
+            (t.labels && t.labels.some((l) => l.toLowerCase().includes(q)))
+        )
+        .map((t) => t.id)
+    )
+
+    const columns = Object.fromEntries(
+      Object.entries(state.columns).map(([colId, col]) => [
+        colId,
+        { ...col, taskIds: col.taskIds.filter((id) => matchingIds.has(id)) },
+      ])
+    )
+
+    return { ...state, columns }
+  }, [state, search])
+
+  /* ── Modal handlers ──────────────────────────────────────────────────────── */
+  function openAdd(columnId = 'todo') {
+    setTaskModal({ open: true, mode: 'add', columnId, task: null })
+  }
+
+  function openEdit(taskId) {
+    const task = state.tasks[taskId]
+    if (!task) return
+    setTaskModal({ open: true, mode: 'edit', columnId: null, task })
+  }
+
+  function openDelete(taskId) {
+    setConfirmDelete({ open: true, taskId })
+  }
+
+  function handleModalSubmit(values) {
+    if (taskModal.mode === 'add') {
+      actions.addTask(taskModal.columnId, values)
+    } else {
+      actions.updateTask(taskModal.task.id, values)
+    }
+  }
+
+  function handleDeleteConfirm() {
+    if (confirmDelete.taskId) {
+      actions.deleteTask(confirmDelete.taskId)
+    }
+  }
+
+  /* ── Render ──────────────────────────────────────────────────────────────── */
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div
+      className="flex flex-col h-screen overflow-hidden"
+      style={{ background: 'var(--c-bg)' }}
+    >
+      <Header onAddTask={() => openAdd('todo')} />
+      <Toolbar state={state} search={search} onSearch={setSearch} />
 
-      <div className="ticks"></div>
+      <Board
+        state={state}
+        filteredState={filteredState}
+        onAddTask={openAdd}
+        onEditTask={openEdit}
+        onDeleteTask={openDelete}
+        onMoveTask={actions.moveTask}
+        onReorder={actions.reorderTask}
+      />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Task add / edit modal */}
+      <TaskModal
+        mode={taskModal.mode}
+        isOpen={taskModal.open}
+        onClose={() => setTaskModal((p) => ({ ...p, open: false }))}
+        initialValues={taskModal.task ?? {}}
+        onSubmit={handleModalSubmit}
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={confirmDelete.open}
+        onClose={() => setConfirmDelete({ open: false, taskId: null })}
+        onConfirm={handleDeleteConfirm}
+        message="Task ini akan dihapus permanen dan tidak bisa dipulihkan."
+      />
+    </div>
   )
 }
 
-export default App
+/* ─── Root (provides context) ───────────────────────────────────────────────── */
+export default function App() {
+  return (
+    <BoardProvider>
+      <KanbanApp />
+    </BoardProvider>
+  )
+}

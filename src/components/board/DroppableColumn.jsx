@@ -39,7 +39,7 @@ export default function DroppableColumn({
   return (
     <section
       aria-label={`${column.title} column, ${columnTasks.length} tasks`}
-      className="flex flex-col gap-0 min-w-[270px] max-w-[320px] w-full shrink-0"
+      className="flex flex-col gap-0 flex-1 min-w-0"
     >
       {/* Column header */}
       <div
@@ -131,18 +131,6 @@ export default function DroppableColumn({
         </div>
       </SortableContext>
 
-      {/* Bottom add-task affordance */}
-      <button
-        type="button"
-        onClick={() => onAddTask?.(column.id)}
-        className="flex items-center gap-1.5 px-2 py-2 mt-1 w-full text-xs text-left transition-colors hover:bg-[var(--c-border)] text-[var(--c-muted)] hover:text-[var(--c-text)]"
-        style={{ borderRadius: 'var(--r-sm)' }}
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        Tambah task
-      </button>
     </section>
   )
 }

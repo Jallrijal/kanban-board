@@ -171,8 +171,8 @@ export default function Board({
       <main
         id="board"
         aria-label="Kanban board"
-        className="flex gap-4 overflow-x-auto px-4 pb-6 pt-2"
-        style={{ minHeight: 'calc(100vh - 116px)' }}
+        className="flex gap-4 px-4 pb-6 pt-2 overflow-x-auto"
+        style={{ minHeight: 'calc(100vh - 116px)', alignItems: 'flex-start' }}
       >
         {columnOrder.map((colId) => (
           <DroppableColumn

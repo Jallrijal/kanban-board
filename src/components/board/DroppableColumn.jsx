@@ -70,17 +70,6 @@ export default function DroppableColumn({
             {columnTasks.length}
           </span>
         </div>
-        <button
-          type="button"
-          aria-label={`Tambah task ke ${column.title}`}
-          onClick={() => onAddTask?.(column.id)}
-          className="flex items-center justify-center w-6 h-6 text-[var(--c-muted)] hover:text-[var(--c-text)] hover:bg-[var(--c-border)] transition-colors"
-          style={{ borderRadius: 'var(--r-sm)' }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
       </div>
 
       {/* Drop zone: task list */}
